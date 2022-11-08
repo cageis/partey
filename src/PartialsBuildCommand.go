@@ -4,6 +4,7 @@ import (
     "fmt"
     "io/ioutil"
     "os"
+    "os/user"
     "path/filepath"
     "strings"
 )
@@ -14,7 +15,26 @@ type PartialsBuildCommand struct {
     commentChars string
 }
 
+func expandTildePrefix(path string) string {
+    usr, _ := user.Current()
+    homeDir := usr.HomeDir
+
+    if path == "~" {
+        return homeDir
+    }
+
+    if strings.HasPrefix(path, "~/") {
+        path = filepath.Join(homeDir, path[2:])
+    }
+
+    return path
+}
+
+
 func NewPartialsBuildCommand(aggregateFile string, partialsDir string, commentChars string) PartialsBuildCommand {
+    aggregateFile = expandTildePrefix(aggregateFile)
+    partialsDir = expandTildePrefix(partialsDir)
+
     return PartialsBuildCommand{aggregateFile, partialsDir, commentChars}
 }
 
@@ -50,6 +70,9 @@ func (p PartialsBuildCommand) Run() {
     output += "\n"
 
     files, err := ioutil.ReadDir(p.partialsDir)
+
+    println(files)
+    println(err)
 
     if err != nil {
         panic(err)
